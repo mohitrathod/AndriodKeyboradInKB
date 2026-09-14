@@ -83,7 +83,7 @@ public class SimpleKeyboardView extends LinearLayout {
         LinearLayout row = new LinearLayout(getContext());
         row.setGravity(Gravity.CENTER);
         addKey(row, symbols ? "123" : "#+=", null, 1.2f);
-        addKey(row, ",", null, 0.8f);
+        addKey(row, "?", null, 0.8f);
         addKey(row, "SPACE", null, 3.2f);
         addKey(row, ".", null, 0.8f);
         addKey(row, "ENTER", null, 1.2f);

@@ -30,7 +30,7 @@
 - Dedicated `1-0` number row at the top.
 - QWERTY letter rows.
 - Special-character page opened with `?123` / `#+=`.
-- Bottom row contains `?123`, comma, space, period, and enter.
+- Bottom row contains `?123`, question mark, space, period, and enter.
 - Bottom navigation-bar inset is handled dynamically, with a minimum bottom padding.
 - `SHIFT` persists after typing and converts letters to uppercase.
 - `DEL` deletes one character on tap and repeats while held.
@@ -122,4 +122,3 @@ Install:
 
 Then open the app, choose **Open keyboard settings**, enable **Simple Light Keyboard**,
 and select it from a text field.
-
