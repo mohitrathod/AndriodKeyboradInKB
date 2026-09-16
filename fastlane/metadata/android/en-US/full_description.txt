@@ -1,0 +1,12 @@
+Andriod Keyborad In KB is a lightweight Android keyboard designed for simple, everyday typing.
+
+Features include:
+
+* QWERTY layout with a dedicated number row
+* Light, dark, and system theme options
+* Two symbol pages
+* Shift lock with visual feedback
+* Repeat-on-hold backspace
+* Dynamic navigation bar spacing
+
+Open the app after installation to enable the keyboard in Android's input method settings.

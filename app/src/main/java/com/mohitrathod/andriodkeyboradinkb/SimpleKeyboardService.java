@@ -1,5 +1,6 @@
 package com.mohitrathod.andriodkeyboradinkb;
 
+import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -10,8 +11,20 @@ public class SimpleKeyboardService extends InputMethodService {
 
     @Override
     public View onCreateInputView() {
-        keyboardView = new SimpleKeyboardView(this, this::handleKey);
+        keyboardView = new SimpleKeyboardView(this, isDarkTheme(), this::handleKey);
         return keyboardView;
+    }
+
+    private boolean isDarkTheme() {
+        int theme = getSharedPreferences("settings", MODE_PRIVATE).getInt("theme", 0);
+        if (theme == 2) {
+            return true;
+        }
+        if (theme == 1) {
+            return false;
+        }
+        return (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                == Configuration.UI_MODE_NIGHT_YES;
     }
 
     private void handleKey(String key) {

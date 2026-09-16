@@ -16,23 +16,32 @@ import android.os.Handler;
 import android.os.Looper;
 
 public class SimpleKeyboardView extends LinearLayout {
-    private static final int BACKGROUND = Color.rgb(232, 232, 240);
-    private static final int TEXT = Color.rgb(24, 53, 105);
-    private static final int HINT = Color.rgb(78, 82, 101);
     interface KeyListener {
         void onKey(String key);
     }
 
     private final KeyListener keyListener;
+    private final int backgroundColor;
+    private final int textColor;
+    private final int hintColor;
     private boolean shifted;
     private boolean symbols;
 
-    public SimpleKeyboardView(Context context, KeyListener keyListener) {
+    public SimpleKeyboardView(Context context, boolean dark, KeyListener keyListener) {
         super(context);
         this.keyListener = keyListener;
+        if (dark) {
+            this.backgroundColor = 0xFF1B1C23;
+            this.textColor = 0xFFE8E8F0;
+            this.hintColor = 0xFF8E92A8;
+        } else {
+            this.backgroundColor = 0xFFE8E8F0;
+            this.textColor = 0xFF183569;
+            this.hintColor = 0xFF4E5265;
+        }
         setOrientation(VERTICAL);
         setPadding(8, 2, 8, 32);
-        setBackgroundColor(BACKGROUND);
+        setBackgroundColor(backgroundColor);
         setOnApplyWindowInsetsListener((view, insets) -> {
             int bottomInset = 0;
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
@@ -83,9 +92,9 @@ public class SimpleKeyboardView extends LinearLayout {
         LinearLayout row = new LinearLayout(getContext());
         row.setGravity(Gravity.CENTER);
         addKey(row, symbols ? "123" : "#+=", null, 1.2f);
-        addKey(row, "?", null, 0.8f);
+        addKey(row, ",", null, 0.8f);
         addKey(row, "SPACE", null, 3.2f);
-        addKey(row, ".", null, 0.8f);
+        addKey(row, "?", null, 0.8f);
         addKey(row, "ENTER", null, 1.2f);
         addView(row, new LayoutParams(-1, 0, 1f));
     }
@@ -108,7 +117,7 @@ public class SimpleKeyboardView extends LinearLayout {
         if (hint != null && !hint.isEmpty()) {
             SpannableString styled = new SpannableString(hint + "\n" + label);
             styled.setSpan(new RelativeSizeSpan(0.52f), 0, hint.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            styled.setSpan(new ForegroundColorSpan(HINT), 0, hint.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            styled.setSpan(new ForegroundColorSpan(hintColor), 0, hint.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             styled.setSpan(new RelativeSizeSpan(1.15f), hint.length() + 1, styled.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             button.setText(styled);
         } else {
@@ -122,7 +131,7 @@ public class SimpleKeyboardView extends LinearLayout {
             textSize = 12;
         }
         button.setTextSize(textSize);
-        button.setTextColor(TEXT);
+        button.setTextColor(textColor);
         button.setAllCaps(false);
         button.setTypeface(Typeface.create("sans", Typeface.NORMAL));
         button.setGravity(Gravity.CENTER);

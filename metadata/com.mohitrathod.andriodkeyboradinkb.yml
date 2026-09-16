@@ -1,13 +1,13 @@
 Categories:
-  - Input
+  - Keyboard & IME
 License: MIT
+AuthorName: Mohit Rathod
+AuthorWebSite: https://github.com/mohitrathod
 SourceCode: https://github.com/mohitrathod/AndriodKeyboradInKB
 IssueTracker: https://github.com/mohitrathod/AndriodKeyboradInKB/issues
+Donate: https://buymeacoffee.com/likelinux
 
-AutoUpdateMode: Version
-UpdateCheckMode: Tags
-
-Name: Andriod Keyborad In KB
+AutoName: Andriod Keyborad In KB
 Summary: A minimal Android input method with a clean light theme
 Description: |-
   Andriod Keyborad In KB is a lightweight, minimal Android keyboard
@@ -19,8 +19,25 @@ Description: |-
 
   Features:
   - Clean lavender/light theme
+  - Dark theme with System/Light/Dark selector
   - QWERTY layout with number row
   - Symbol pages (?123 and #+=)
   - Shift lock with visual feedback
   - Repeat-on-hold backspace
   - Dynamic navigation bar insets
+
+RepoType: git
+Repo: https://github.com/mohitrathod/AndriodKeyboradInKB.git
+
+Builds:
+  - versionName: 1.0.1
+    versionCode: 2
+    commit: v1.0.1
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.1
+CurrentVersionCode: 2
