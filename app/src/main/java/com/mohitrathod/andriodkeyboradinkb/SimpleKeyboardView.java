@@ -1,4 +1,4 @@
-package com.example.simplelightkeyboard;
+package com.mohitrathod.andriodkeyboradinkb;
 
 import android.content.Context;
 import android.graphics.Color;

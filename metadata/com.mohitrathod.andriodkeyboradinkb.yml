@@ -1,0 +1,26 @@
+Categories:
+  - Input
+License: MIT
+SourceCode: https://github.com/mohitrathod/AndriodKeyboradInKB
+IssueTracker: https://github.com/mohitrathod/AndriodKeyboradInKB/issues
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+
+Name: Andriod Keyborad In KB
+Summary: A minimal Android input method with a clean light theme
+Description: |-
+  Andriod Keyborad In KB is a lightweight, minimal Android keyboard
+  with a clean light theme. It features a QWERTY layout with a number
+  row, symbol pages, shift lock, and repeat-on-hold backspace.
+
+  To use: Open the app, tap "Open keyboard settings", enable
+  "Andriod Keyborad In KB", then select it from any text field.
+
+  Features:
+  - Clean lavender/light theme
+  - QWERTY layout with number row
+  - Symbol pages (?123 and #+=)
+  - Shift lock with visual feedback
+  - Repeat-on-hold backspace
+  - Dynamic navigation bar insets

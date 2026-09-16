@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace "com.example.simplelightkeyboard"
+    namespace "com.mohitrathod.andriodkeyboradinkb"
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.example.simplelightkeyboard"
+        applicationId "com.mohitrathod.andriodkeyboradinkb"
         minSdk 23
         targetSdk 35
         versionCode 1

@@ -1,4 +1,4 @@
-package com.example.simplelightkeyboard;
+package com.mohitrathod.andriodkeyboradinkb;
 
 import android.inputmethodservice.InputMethodService;
 import android.view.View;

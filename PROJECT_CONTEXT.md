@@ -2,9 +2,9 @@
 
 ## Project
 
-- Name: Simple Light Keyboard
+- Name: Andriod Keyborad In KB
 - Location: `/mnt/c/dev/projects/AndriodKeyboradInKB`
-- Package/application ID: `com.example.simplelightkeyboard`
+- Package/application ID: `com.mohitrathod.andriodkeyboradinkb`
 - Language: Java
 - Android minimum SDK: 23
 - Android target/compile SDK: 35
@@ -14,11 +14,11 @@
 
 ## Important source files
 
-- `app/src/main/java/com/example/simplelightkeyboard/MainActivity.java`
+- `app/src/main/java/com/mohitrathod/andriodkeyboradinkb/MainActivity.java`
   - Setup screen with a button opening Android input-method settings.
-- `app/src/main/java/com/example/simplelightkeyboard/SimpleKeyboardService.java`
+- `app/src/main/java/com/mohitrathod/andriodkeyboradinkb/SimpleKeyboardService.java`
   - Android `InputMethodService`; commits text, handles enter, space, and delete.
-- `app/src/main/java/com/example/simplelightkeyboard/SimpleKeyboardView.java`
+- `app/src/main/java/com/mohitrathod/andriodkeyboradinkb/SimpleKeyboardView.java`
   - Programmatic keyboard UI and key behavior.
 - `app/src/main/AndroidManifest.xml`
   - Declares the launcher activity and input-method service.
@@ -120,5 +120,5 @@ Install:
 
 `app/build/outputs/apk/release/simple-light-keyboard-release.apk`
 
-Then open the app, choose **Open keyboard settings**, enable **Simple Light Keyboard**,
+Then open the app, choose **Open keyboard settings**, enable **Andriod Keyborad In KB**,
 and select it from a text field.
