@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Switch;
 
 public class MainActivity extends Activity {
     private static final String PREFS = "settings";
@@ -80,6 +81,16 @@ public class MainActivity extends Activity {
 
         root.addView(themeLabel, new LinearLayout.LayoutParams(-1, -2));
         root.addView(themeGroup, new LinearLayout.LayoutParams(-1, -2));
+
+        SharedPreferences preferences = getSharedPreferences(PREFS, MODE_PRIVATE);
+        Switch highlightSwitch = new Switch(this);
+        highlightSwitch.setText(R.string.key_press_highlight);
+        highlightSwitch.setTextColor(getColor(R.color.title_text));
+        highlightSwitch.setPadding(0, 20, 0, 8);
+        highlightSwitch.setChecked(preferences.getBoolean("key_press_highlight", true));
+        highlightSwitch.setOnCheckedChangeListener((button, checked) ->
+                preferences.edit().putBoolean("key_press_highlight", checked).apply());
+        root.addView(highlightSwitch, new LinearLayout.LayoutParams(-1, -2));
 
         Button contactDeveloper = new Button(this);
         contactDeveloper.setText(R.string.contact_developer);

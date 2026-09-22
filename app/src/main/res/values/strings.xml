@@ -8,6 +8,7 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="key_press_highlight">Key press highlight</string>
     <string name="contact_developer">Contact developer</string>
     <string name="contact_developer_url" translatable="false">https://forms.gle/5TE3z2NioFAzcFgt8</string>
 </resources>
