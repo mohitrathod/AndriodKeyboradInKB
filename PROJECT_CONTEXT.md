@@ -41,16 +41,16 @@
 The repository intentionally does not contain `local.properties`. In this environment,
 the Android SDK is installed at:
 
-`/root/dev/software/android-sdk`
+`/tmp/simple-light-build/android-sdk`
 
 Gradle is installed at:
 
-`/root/dev/software/gradle-8.7/bin/gradle`
+`/tmp/simple-light-build/gradle-8.7/bin/gradle`
 
 Before building, create a temporary `local.properties` file:
 
 ```bash
-printf 'sdk.dir=/root/dev/software/android-sdk\n' > local.properties
+printf 'sdk.dir=/tmp/simple-light-build/android-sdk\n' > local.properties
 ```
 
 Use Java 17:
@@ -62,9 +62,7 @@ export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ## Build debug APK
 
 ```bash
-ANDROID_HOME=/root/dev/software/android-sdk \
-JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
-/root/dev/software/gradle-8.7/bin/gradle --no-daemon :app:assembleDebug
+/tmp/simple-light-build/gradle-8.7/bin/gradle --no-daemon assembleDebug
 ```
 
 Output:
@@ -74,9 +72,7 @@ Output:
 ## Build release APK
 
 ```bash
-ANDROID_HOME=/root/dev/software/android-sdk \
-JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
-/root/dev/software/gradle-8.7/bin/gradle --no-daemon :app:assembleRelease
+/tmp/simple-light-build/gradle-8.7/bin/gradle --no-daemon assembleRelease
 ```
 
 The release output from Gradle is unsigned:
@@ -85,31 +81,34 @@ The release output from Gradle is unsigned:
 
 The release APK currently delivered to the user is manually aligned and signed as:
 
-`app/build/outputs/apk/release/andriod-keyboard-release.apk`
+`app/build/outputs/apk/release/simple-light-keyboard-release.apk`
 
 ## Release signing
 
-The release keystore is kept outside the repository. Do not commit the keystore or its
-password. If the keystore is available, align and sign the release APK with Android
-Build Tools:
+The local development keystore is outside the repository:
+
+`/tmp/simple-light-build/simple-light-release.keystore`
+
+Do not commit the keystore or its password. If the keystore is available, align and
+sign the release APK with Android Build Tools:
 
 ```bash
-SDK=/root/dev/software/android-sdk
-KEYSTORE=<path-to-keystore>
+SDK=/tmp/simple-light-build/android-sdk
+KEYSTORE=/tmp/simple-light-build/simple-light-release.keystore
 
 $SDK/build-tools/35.0.0/zipalign -f 4 \
   app/build/outputs/apk/release/app-release-unsigned.apk \
-  /tmp/andriod-app-release-aligned.apk
+  /tmp/simple-light-build/app-release-aligned.apk
 
 $SDK/build-tools/35.0.0/apksigner sign \
   --ks "$KEYSTORE" \
-  --ks-pass pass:<keystore-password> \
-  --key-pass pass:<key-password> \
-  --out app/build/outputs/apk/release/andriod-keyboard-release.apk \
-  /tmp/andriod-app-release-aligned.apk
+  --ks-pass pass:<local-keystore-password> \
+  --key-pass pass:<local-keystore-password> \
+  --out app/build/outputs/apk/release/simple-light-keyboard-release.apk \
+  /tmp/simple-light-build/app-release-aligned.apk
 
 $SDK/build-tools/35.0.0/apksigner verify \
-  app/build/outputs/apk/release/andriod-keyboard-release.apk
+  app/build/outputs/apk/release/simple-light-keyboard-release.apk
 ```
 
 Remove `local.properties` after building so the machine-specific SDK path is not
@@ -119,7 +118,7 @@ stored in the repository.
 
 Install:
 
-`app/build/outputs/apk/debug/app-debug.apk`
+`app/build/outputs/apk/release/simple-light-keyboard-release.apk`
 
 Then open the app, choose **Open keyboard settings**, enable **Andriod Keyborad In KB**,
 and select it from a text field.

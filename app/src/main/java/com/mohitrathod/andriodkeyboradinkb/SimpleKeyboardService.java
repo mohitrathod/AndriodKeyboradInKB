@@ -3,7 +3,6 @@ package com.mohitrathod.andriodkeyboradinkb;
 import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
 import android.view.View;
-import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
@@ -12,25 +11,8 @@ public class SimpleKeyboardService extends InputMethodService {
 
     @Override
     public View onCreateInputView() {
-        if (keyboardView != null) {
-            keyboardView.stopRepeatingDelete();
-        }
-        keyboardView = new SimpleKeyboardView(this, isDarkTheme(),
-                isHighlightEnabled(), this::handleKey);
+        keyboardView = new SimpleKeyboardView(this, isDarkTheme(), this::handleKey);
         return keyboardView;
-    }
-
-    private boolean isHighlightEnabled() {
-        return getSharedPreferences("settings", MODE_PRIVATE)
-                .getBoolean("key_press_highlight", true);
-    }
-
-    @Override
-    public void onStartInputView(EditorInfo attribute, boolean restarting) {
-        super.onStartInputView(attribute, restarting);
-        if (keyboardView != null) {
-            keyboardView.setHighlightEnabled(isHighlightEnabled());
-        }
     }
 
     private boolean isDarkTheme() {
@@ -53,8 +35,7 @@ public class SimpleKeyboardService extends InputMethodService {
 
         switch (key) {
             case "BACKSPACE":
-                // Let the editor handle Backspace, including selected text.
-                sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL);
+                connection.deleteSurroundingText(1, 0);
                 break;
             case "ENTER":
                 connection.sendKeyEvent(new android.view.KeyEvent(
@@ -75,24 +56,8 @@ public class SimpleKeyboardService extends InputMethodService {
     @Override
     public void onStartInput(EditorInfo attribute, boolean restarting) {
         super.onStartInput(attribute, restarting);
-        if (keyboardView != null && !restarting) {
+        if (keyboardView != null) {
             keyboardView.resetShift();
         }
-    }
-
-    @Override
-    public void onFinishInputView(boolean finishingInput) {
-        if (keyboardView != null) {
-            keyboardView.stopRepeatingDelete();
-        }
-        super.onFinishInputView(finishingInput);
-    }
-
-    @Override
-    public void onFinishInput() {
-        if (keyboardView != null) {
-            keyboardView.stopRepeatingDelete();
-        }
-        super.onFinishInput();
     }
 }
