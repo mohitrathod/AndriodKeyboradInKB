@@ -8,6 +8,14 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="dictionary_label">Custom words</string>
+    <string name="dictionary_hint">Add a word</string>
+    <string name="dictionary_add">Add</string>
+    <string name="dictionary_count">Custom words: %d</string>
+    <string name="dictionary_clear">Clear all</string>
+    <string name="dictionary_added">Added to dictionary</string>
+    <string name="dictionary_invalid">Enter a word with letters only</string>
+    <string name="dictionary_cleared">Custom words cleared</string>
     <string name="contact_developer">Contact developer</string>
     <string name="contact_developer_url" translatable="false">https://forms.gle/5TE3z2NioFAzcFgt8</string>
 </resources>

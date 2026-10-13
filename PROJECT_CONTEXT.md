@@ -15,13 +15,19 @@
 ## Important source files
 
 - `app/src/main/java/com/mohitrathod/andriodkeyboradinkb/MainActivity.java`
-  - Setup screen with a button opening Android input-method settings.
+  - Setup screen with button opening Android input-method settings, theme selector, and custom word management.
 - `app/src/main/java/com/mohitrathod/andriodkeyboradinkb/SimpleKeyboardService.java`
-  - Android `InputMethodService`; commits text, handles enter, space, and delete.
+  - Android `InputMethodService`; commits text, handles enter, space, delete; loads dictionaries, learns words, provides autocomplete suggestions.
 - `app/src/main/java/com/mohitrathod/andriodkeyboradinkb/SimpleKeyboardView.java`
-  - Programmatic keyboard UI and key behavior.
+  - Programmatic keyboard UI, key behavior, and suggestion strip.
+- `app/src/main/java/com/mohitrathod/andriodkeyboradinkb/WordDictionary.java`
+  - Loads bundled frequency word list from assets; prefix lookup with frequency ranking.
+- `app/src/main/java/com/mohitrathod/andriodkeyboradinkb/UserDictionary.java`
+  - Personal dictionary persisted to app-private storage; tracks usage counts, supports manual add/remove.
 - `app/src/main/AndroidManifest.xml`
   - Declares the launcher activity and input-method service.
+- `app/src/main/assets/words.txt`
+  - Bundled word frequency list (MIT license, derived from hermitdave/FrequencyWords).
 
 ## Current keyboard behavior
 
@@ -35,22 +41,24 @@
 - `SHIFT` persists after typing and converts letters to uppercase.
 - `DEL` deletes one character on tap and repeats while held.
 - Control labels use smaller text so `SHIFT`, `DEL`, and `ENTER` fit.
+- **Suggestion strip** above keys when not on symbols page; shows up to 3 completions.
+- **Autocomplete**: merges personal dictionary (active words) with bundled list; tap to replace current word.
+- **Learning**: words typed twice are added to personal dictionary; manual add is immediate.
 
 ## Build environment
 
 The repository intentionally does not contain `local.properties`. In this environment,
 the Android SDK is installed at:
 
-`/tmp/simple-light-build/android-sdk`
+`/usr/lib/android-sdk`
 
-Gradle is installed at:
-
-`/tmp/simple-light-build/gradle-8.7/bin/gradle`
+Build with the project Gradle wrapper (Gradle 8.7). The system `gradle` on PATH is too
+old and must not be used.
 
 Before building, create a temporary `local.properties` file:
 
 ```bash
-printf 'sdk.dir=/tmp/simple-light-build/android-sdk\n' > local.properties
+printf 'sdk.dir=/usr/lib/android-sdk\n' > local.properties
 ```
 
 Use Java 17:
@@ -62,7 +70,7 @@ export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ## Build debug APK
 
 ```bash
-/tmp/simple-light-build/gradle-8.7/bin/gradle --no-daemon assembleDebug
+./gradlew --no-daemon assembleDebug
 ```
 
 Output:
@@ -72,44 +80,54 @@ Output:
 ## Build release APK
 
 ```bash
-/tmp/simple-light-build/gradle-8.7/bin/gradle --no-daemon assembleRelease
+./gradlew --no-daemon assembleRelease
 ```
 
 The release output from Gradle is unsigned:
 
 `app/build/outputs/apk/release/app-release-unsigned.apk`
 
-The release APK currently delivered to the user is manually aligned and signed as:
-
-`app/build/outputs/apk/release/simple-light-keyboard-release.apk`
+An unsigned APK cannot be installed (Android reports "package invalid"). Align and
+sign it before installing.
 
 ## Release signing
 
-The local development keystore is outside the repository:
+Release APKs are signed with a private release keystore kept outside the repository
+(so the password is never committed):
 
-`/tmp/simple-light-build/simple-light-release.keystore`
-
-Do not commit the keystore or its password. If the keystore is available, align and
-sign the release APK with Android Build Tools:
+- Keystore: `/root/dev/projects/AndriodKeyboradInKB-release-20260922.jks`
+- Key alias: `andriod-kbrd`
+- Store/key password: read from
+  `/root/dev/projects/AndriodKeyboradInKB-release-20260922.pass`
+  (single line, mode 600; not in this repository)
+- Signer certificate SHA-256:
+  `d872fbe45fdd6b9c5538224e70898e4f20b184298c5620570b8c5ed34578dc45`
 
 ```bash
-SDK=/tmp/simple-light-build/android-sdk
-KEYSTORE=/tmp/simple-light-build/simple-light-release.keystore
+SDK=/usr/lib/android-sdk
+BT=$SDK/build-tools/34.0.0
+KS=/root/dev/projects/AndriodKeyboradInKB-release-20260922.jks
+PASSFILE=/root/dev/projects/AndriodKeyboradInKB-release-20260922.pass
 
-$SDK/build-tools/35.0.0/zipalign -f 4 \
+$BT/zipalign -f 4 \
   app/build/outputs/apk/release/app-release-unsigned.apk \
-  /tmp/simple-light-build/app-release-aligned.apk
+  /tmp/opencode/sign/aligned.apk
 
-$SDK/build-tools/35.0.0/apksigner sign \
-  --ks "$KEYSTORE" \
-  --ks-pass pass:<local-keystore-password> \
-  --key-pass pass:<local-keystore-password> \
-  --out app/build/outputs/apk/release/simple-light-keyboard-release.apk \
-  /tmp/simple-light-build/app-release-aligned.apk
+$BT/apksigner sign \
+  --ks "$KS" \
+  --ks-key-alias andriod-kbrd \
+  --ks-pass "file:$PASSFILE" \
+  --out app/build/outputs/apk/release/andriod-keyboard-release.apk \
+  /tmp/opencode/sign/aligned.apk
 
-$SDK/build-tools/35.0.0/apksigner verify \
-  app/build/outputs/apk/release/simple-light-keyboard-release.apk
+$BT/apksigner verify --print-certs \
+  app/build/outputs/apk/release/andriod-keyboard-release.apk
 ```
+
+Omit `--key-pass`: the one-line password file can only be consumed once. The debug
+keystore (`~/.android/debug.keystore`) produces a signature mismatch ("package
+conflict") and cannot update an existing release install, so use it only for
+throwaway local tests.
 
 Remove `local.properties` after building so the machine-specific SDK path is not
 stored in the repository.
@@ -118,7 +136,7 @@ stored in the repository.
 
 Install:
 
-`app/build/outputs/apk/release/simple-light-keyboard-release.apk`
+`app/build/outputs/apk/release/andriod-keyboard-release.apk`
 
 Then open the app, choose **Open keyboard settings**, enable **Andriod Keyborad In KB**,
-and select it from a text field.
+and select it from a text field. Manage custom words in the app under **Custom words**.

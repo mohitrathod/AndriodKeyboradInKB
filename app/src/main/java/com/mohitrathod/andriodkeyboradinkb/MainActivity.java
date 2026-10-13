@@ -10,10 +10,12 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
     private static final String PREFS = "settings";
@@ -21,6 +23,10 @@ public class MainActivity extends Activity {
     private static final int THEME_SYSTEM = 0;
     private static final int THEME_LIGHT = 1;
     private static final int THEME_DARK = 2;
+
+    private UserDictionary userDictionary;
+    private TextView dictCountView;
+    private EditText dictInput;
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -30,6 +36,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        userDictionary = UserDictionary.get(this);
+        userDictionary.ensureLoaded(() -> runOnUiThread(this::updateDictCount));
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -81,6 +90,8 @@ public class MainActivity extends Activity {
         root.addView(themeLabel, new LinearLayout.LayoutParams(-1, -2));
         root.addView(themeGroup, new LinearLayout.LayoutParams(-1, -2));
 
+        addDictionarySection(root);
+
         Button contactDeveloper = new Button(this);
         contactDeveloper.setText(R.string.contact_developer);
         contactDeveloper.setOnClickListener(v -> startActivity(new Intent(
@@ -91,6 +102,74 @@ public class MainActivity extends Activity {
         root.addView(contactDeveloper, contactParams);
 
         setContentView(root);
+    }
+
+    private void addDictionarySection(LinearLayout root) {
+        TextView dictLabel = new TextView(this);
+        dictLabel.setText(R.string.dictionary_label);
+        dictLabel.setTextColor(getColor(R.color.title_text));
+        dictLabel.setTextSize(18);
+        dictLabel.setPadding(0, 28, 0, 8);
+
+        dictCountView = new TextView(this);
+        dictCountView.setTextColor(getColor(R.color.message_text));
+        dictCountView.setTextSize(14);
+        dictCountView.setPadding(0, 0, 0, 8);
+
+        LinearLayout inputRow = new LinearLayout(this);
+        inputRow.setOrientation(LinearLayout.HORIZONTAL);
+        inputRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        dictInput = new EditText(this);
+        dictInput.setHint(R.string.dictionary_hint);
+        dictInput.setTextColor(getColor(R.color.title_text));
+        dictInput.setHintTextColor(getColor(R.color.hintColor));
+        dictInput.setTextSize(16);
+        dictInput.setBackgroundResource(android.R.drawable.edit_text);
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(0, -2, 1f);
+        inputParams.setMargins(0, 0, 8, 0);
+        inputRow.addView(dictInput, inputParams);
+
+        Button addBtn = new Button(this);
+        addBtn.setText(R.string.dictionary_add);
+        addBtn.setOnClickListener(v -> addCustomWord());
+        inputRow.addView(addBtn, new LinearLayout.LayoutParams(-2, -2));
+
+        Button clearBtn = new Button(this);
+        clearBtn.setText(R.string.dictionary_clear);
+        clearBtn.setOnClickListener(v -> clearCustomWords());
+        LinearLayout.LayoutParams clearParams = new LinearLayout.LayoutParams(-1, -2);
+        clearParams.topMargin = 8;
+        clearParams.bottomMargin = 8;
+
+        root.addView(dictLabel, new LinearLayout.LayoutParams(-1, -2));
+        root.addView(dictCountView, new LinearLayout.LayoutParams(-1, -2));
+        root.addView(inputRow, new LinearLayout.LayoutParams(-1, -2));
+        root.addView(clearBtn, clearParams);
+    }
+
+    private void addCustomWord() {
+        String word = dictInput.getText().toString().trim().toLowerCase();
+        if (word.isEmpty() || word.length() < 2 || !word.matches("[a-z']+")) {
+            Toast.makeText(this, R.string.dictionary_invalid, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        userDictionary.addManual(word);
+        dictInput.setText("");
+        updateDictCount();
+        Toast.makeText(this, R.string.dictionary_added, Toast.LENGTH_SHORT).show();
+    }
+
+    private void clearCustomWords() {
+        userDictionary.clear();
+        updateDictCount();
+        Toast.makeText(this, R.string.dictionary_cleared, Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateDictCount() {
+        if (dictCountView != null && userDictionary.isLoaded()) {
+            dictCountView.setText(getString(R.string.dictionary_count, userDictionary.size()));
+        }
     }
 
     private Context applyTheme(Context base) {

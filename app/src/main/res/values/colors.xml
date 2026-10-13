@@ -5,4 +5,5 @@
     <color name="main_background">#F5F7FA</color>
     <color name="title_text">#263238</color>
     <color name="message_text">#546E7A</color>
+    <color name="hintColor">#4E5265</color>
 </resources>

@@ -7,6 +7,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.WindowInsets;
@@ -14,10 +15,16 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.os.Handler;
 import android.os.Looper;
+import java.util.Collections;
+import java.util.List;
 
 public class SimpleKeyboardView extends LinearLayout {
     interface KeyListener {
         void onKey(String key);
+    }
+
+    interface SuggestionListener {
+        void onSuggestion(String word);
     }
 
     private final KeyListener keyListener;
@@ -26,6 +33,9 @@ public class SimpleKeyboardView extends LinearLayout {
     private final int hintColor;
     private boolean shifted;
     private boolean symbols;
+    private List<String> suggestions = Collections.emptyList();
+    private SuggestionListener suggestionListener;
+    private LinearLayout suggestionsRow;
 
     public SimpleKeyboardView(Context context, boolean dark, KeyListener keyListener) {
         super(context);
@@ -55,27 +65,85 @@ public class SimpleKeyboardView extends LinearLayout {
         buildKeyboard();
     }
 
+    public void setSuggestionListener(SuggestionListener listener) {
+        this.suggestionListener = listener;
+    }
+
+    public void setSuggestions(List<String> suggestions) {
+        List<String> next = suggestions == null ? Collections.emptyList() : suggestions;
+        if (next.equals(this.suggestions)) {
+            return;
+        }
+        this.suggestions = next;
+        renderSuggestions();
+    }
+
     public void resetShift() {
         shifted = false;
         symbols = false;
+        suggestions = Collections.emptyList();
         buildKeyboard();
     }
 
     private void buildKeyboard() {
         removeAllViews();
-        if (symbols) {
-            addRow(new String[]{"!", "@", "#", "$", "%", "^", "&", "*", "(", ")"}, null);
-            addRow(new String[]{"-", "_", "=", "+", "[", "]", "{", "}"}, null);
-            addRow(new String[]{";", ":", "'", "\"", ",", ".", "?", "/"}, null);
-            addRow(new String[]{"ABC", "\\", "|", "~", "`", "BACKSPACE"}, null);
-            addBottomRow();
-        } else {
+        suggestionsRow = null;
+        if (!symbols) {
+            suggestionsRow = new LinearLayout(getContext());
+            suggestionsRow.setGravity(Gravity.CENTER);
+            suggestionsRow.setPadding(0, 4, 0, 4);
+            addView(suggestionsRow, new LayoutParams(-1, dpToPx(40), 0f));
+            renderSuggestions();
+
             addRow(new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}, null);
             addRow(new String[]{"q", "w", "e", "r", "t", "y", "u", "i", "o", "p"}, null);
             addRow(new String[]{"a", "s", "d", "f", "g", "h", "j", "k", "l"}, null);
             addRow(new String[]{"SHIFT", "z", "x", "c", "v", "b", "n", "m", "BACKSPACE"}, null);
             addBottomRow();
+        } else {
+            addRow(new String[]{"!", "@", "#", "$", "%", "^", "&", "*", "(", ")"}, null);
+            addRow(new String[]{"-", "_", "=", "+", "[", "]", "{", "}"}, null);
+            addRow(new String[]{";", ":", "'", "\"", ",", ".", "?", "/"}, null);
+            addRow(new String[]{"ABC", "\\", "|", "~", "`", "BACKSPACE"}, null);
+            addBottomRow();
         }
+    }
+
+    private void renderSuggestions() {
+        if (suggestionsRow == null) return;
+        suggestionsRow.removeAllViews();
+        int count = Math.min(suggestions.size(), 3);
+        if (count == 0) {
+            suggestionsRow.setVisibility(GONE);
+            return;
+        }
+        suggestionsRow.setVisibility(VISIBLE);
+        float weight = 1f / count;
+        for (int i = 0; i < count; i++) {
+            addSuggestionKey(suggestionsRow, suggestions.get(i), weight);
+        }
+    }
+
+    private void addSuggestionKey(LinearLayout row, String word, float weight) {
+        Button button = new Button(getContext());
+        button.setText(word);
+        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        button.setTextColor(textColor);
+        button.setAllCaps(false);
+        button.setTypeface(Typeface.create("sans", Typeface.NORMAL));
+        button.setGravity(Gravity.CENTER);
+        button.setMinHeight(0);
+        button.setMinWidth(0);
+        button.setPadding(8, 0, 8, 0);
+        button.setBackgroundColor(Color.TRANSPARENT);
+        button.setOnClickListener(v -> {
+            if (suggestionListener != null) {
+                suggestionListener.onSuggestion(word);
+            }
+        });
+        LayoutParams params = new LayoutParams(0, -1, weight);
+        params.setMargins(2, 0, 2, 0);
+        row.addView(button, params);
     }
 
     private void addRow(String[] row, String[] hints) {
@@ -168,6 +236,7 @@ public class SimpleKeyboardView extends LinearLayout {
             } else if (key.equals("#+=") || key.equals("ABC") || key.equals("123")) {
                 symbols = key.equals("#+=");
                 shifted = false;
+                suggestions = Collections.emptyList();
                 buildKeyboard();
             } else {
                 keyListener.onKey(key.equals("SPACE") ? "SPACE" :
@@ -178,5 +247,9 @@ public class SimpleKeyboardView extends LinearLayout {
         LayoutParams params = new LayoutParams(0, -1, weight);
         params.setMargins(1, 0, 1, 0);
         row.addView(button, params);
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
     }
 }
