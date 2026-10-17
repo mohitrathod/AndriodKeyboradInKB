@@ -23,6 +23,8 @@ public class MainActivity extends Activity {
     private static final int THEME_SYSTEM = 0;
     private static final int THEME_LIGHT = 1;
     private static final int THEME_DARK = 2;
+    private static final int REQUEST_EXPORT = 1;
+    private static final int REQUEST_IMPORT = 2;
 
     private UserDictionary userDictionary;
     private TextView dictCountView;
@@ -104,6 +106,12 @@ public class MainActivity extends Activity {
         setContentView(root);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateDictCount();
+    }
+
     private void addDictionarySection(LinearLayout root) {
         TextView dictLabel = new TextView(this);
         dictLabel.setText(R.string.dictionary_label);
@@ -142,15 +150,70 @@ public class MainActivity extends Activity {
         clearParams.topMargin = 8;
         clearParams.bottomMargin = 8;
 
+        LinearLayout ioRow = new LinearLayout(this);
+        ioRow.setOrientation(LinearLayout.HORIZONTAL);
+        ioRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        Button importBtn = new Button(this);
+        importBtn.setText(R.string.dictionary_import);
+        importBtn.setOnClickListener(v -> startImport());
+        LinearLayout.LayoutParams importParams = new LinearLayout.LayoutParams(0, -2, 1f);
+        importParams.setMargins(0, 0, 8, 0);
+        ioRow.addView(importBtn, importParams);
+
+        Button exportBtn = new Button(this);
+        exportBtn.setText(R.string.dictionary_export);
+        exportBtn.setOnClickListener(v -> startExport());
+        ioRow.addView(exportBtn, new LinearLayout.LayoutParams(0, -2, 1f));
+
         root.addView(dictLabel, new LinearLayout.LayoutParams(-1, -2));
         root.addView(dictCountView, new LinearLayout.LayoutParams(-1, -2));
         root.addView(inputRow, new LinearLayout.LayoutParams(-1, -2));
         root.addView(clearBtn, clearParams);
+        root.addView(ioRow, new LinearLayout.LayoutParams(-1, -2));
+    }
+
+    private void startExport() {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_TITLE, "keyboard-words.txt");
+        startActivityForResult(intent, REQUEST_EXPORT);
+    }
+
+    private void startImport() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("text/*");
+        startActivityForResult(intent, REQUEST_IMPORT);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        final Uri uri = data.getData();
+        if (requestCode == REQUEST_EXPORT) {
+            userDictionary.ensureLoaded(() -> userDictionary.exportAsync(uri, (ok, count) ->
+                    runOnUiThread(() -> Toast.makeText(this,
+                            ok ? getString(R.string.dictionary_exported, count)
+                               : getString(R.string.dictionary_export_failed),
+                            Toast.LENGTH_SHORT).show())));
+        } else if (requestCode == REQUEST_IMPORT) {
+            userDictionary.ensureLoaded(() -> userDictionary.importAsync(uri, (ok, count) ->
+                    runOnUiThread(() -> {
+                        updateDictCount();
+                        Toast.makeText(this,
+                                ok ? getString(R.string.dictionary_imported, count)
+                                   : getString(R.string.dictionary_import_failed),
+                                Toast.LENGTH_SHORT).show();
+                    })));
+        }
     }
 
     private void addCustomWord() {
         String word = dictInput.getText().toString().trim().toLowerCase();
-        if (word.isEmpty() || word.length() < 2 || !word.matches("[a-z']+")) {
+        if (word.isEmpty() || word.length() < 4 || !word.matches("[a-z']+")) {
             Toast.makeText(this, R.string.dictionary_invalid, Toast.LENGTH_SHORT).show();
             return;
         }

@@ -1,14 +1,19 @@
 package com.mohitrathod.andriodkeyboradinkb;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -21,8 +26,13 @@ public class UserDictionary {
     private static final String TAG = "UserDictionary";
     private static final String FILE_NAME = "user_words.txt";
     private static final int MAX_ENTRIES = 5000;
+    private static final int MIN_WORD_LENGTH = 4;
 
     private static volatile UserDictionary instance;
+
+    public interface ResultCallback {
+        void onResult(boolean success, int count);
+    }
 
     private static class Entry {
         int count;
@@ -90,6 +100,7 @@ public class UserDictionary {
                     String[] parts = line.split("\t");
                     if (parts.length >= 2) {
                         String word = parts[0].toLowerCase();
+                        if (word.length() < MIN_WORD_LENGTH) continue;
                         int count = Integer.parseInt(parts[1]);
                         boolean manual = parts.length >= 3 && "manual".equals(parts[2]);
                         loadedEntries.put(word, new Entry(count, manual));
@@ -128,7 +139,7 @@ public class UserDictionary {
     }
 
     public synchronized void recordUse(String word) {
-        if (word == null || word.length() < 2 || !word.matches("[a-z']+")) return;
+        if (word == null || word.length() < MIN_WORD_LENGTH || !word.matches("[a-z']+")) return;
         String w = word.toLowerCase();
         Entry e = entries.get(w);
         if (e == null) {
@@ -140,7 +151,7 @@ public class UserDictionary {
     }
 
     public synchronized void addManual(String word) {
-        if (word == null || word.length() < 2 || !word.matches("[a-z']+")) return;
+        if (word == null || word.length() < MIN_WORD_LENGTH || !word.matches("[a-z']+")) return;
         String w = word.toLowerCase();
         Entry e = entries.get(w);
         if (e == null) {
@@ -173,7 +184,7 @@ public class UserDictionary {
 
     public synchronized List<String> suggest(String prefix, int max) {
         List<String> result = new ArrayList<>();
-        if (prefix == null || prefix.length() < 1) return result;
+        if (prefix == null || prefix.length() < MIN_WORD_LENGTH) return result;
         String p = prefix.toLowerCase();
         for (Map.Entry<String, Entry> entry : entries.entrySet()) {
             String word = entry.getKey();
@@ -191,33 +202,128 @@ public class UserDictionary {
         synchronized (this) {
             snapshot = new HashMap<>(entries);
         }
-        executor.execute(() -> {
-            File temp = new File(context.getFilesDir(), FILE_NAME + ".tmp");
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(temp))) {
-                List<Map.Entry<String, Entry>> list = new ArrayList<>(snapshot.entrySet());
-                list.sort((a, b) -> {
-                    Entry ea = a.getValue();
-                    Entry eb = b.getValue();
-                    boolean aa = ea.isActive();
-                    boolean ab = eb.isActive();
-                    if (aa != ab) return aa ? -1 : 1;
-                    if (ea.manual != eb.manual) return ea.manual ? -1 : 1;
-                    return Integer.compare(eb.count, ea.count);
-                });
-                if (list.size() > MAX_ENTRIES) {
-                    list = list.subList(0, MAX_ENTRIES);
-                }
-                for (Map.Entry<String, Entry> e : list) {
-                    bw.write(e.getKey() + "\t" + e.getValue().count + "\t" + (e.getValue().manual ? "manual" : "auto"));
-                    bw.newLine();
-                }
-                bw.flush();
-                if (!temp.renameTo(file)) {
-                    Log.w(TAG, "Failed to rename temp file");
-                }
-            } catch (IOException ex) {
-                Log.w(TAG, "Failed to persist user dictionary", ex);
+        executor.execute(() -> persistNow(snapshot));
+    }
+
+    private void persistNow(Map<String, Entry> snapshot) {
+        File temp = new File(context.getFilesDir(), FILE_NAME + ".tmp");
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(temp))) {
+            List<Map.Entry<String, Entry>> list = new ArrayList<>(snapshot.entrySet());
+            list.sort((a, b) -> {
+                Entry ea = a.getValue();
+                Entry eb = b.getValue();
+                boolean aa = ea.isActive();
+                boolean ab = eb.isActive();
+                if (aa != ab) return aa ? -1 : 1;
+                if (ea.manual != eb.manual) return ea.manual ? -1 : 1;
+                return Integer.compare(eb.count, ea.count);
+            });
+            if (list.size() > MAX_ENTRIES) {
+                list = list.subList(0, MAX_ENTRIES);
             }
+            for (Map.Entry<String, Entry> e : list) {
+                bw.write(e.getKey() + "\t" + e.getValue().count + "\t" + (e.getValue().manual ? "manual" : "auto"));
+                bw.newLine();
+            }
+            bw.flush();
+            if (!temp.renameTo(file)) {
+                Log.w(TAG, "Failed to rename temp file");
+            }
+        } catch (IOException ex) {
+            Log.w(TAG, "Failed to persist user dictionary", ex);
+        }
+    }
+
+    public synchronized String exportText() {
+        List<Map.Entry<String, Entry>> list = new ArrayList<>(entries.entrySet());
+        list.sort(Comparator.comparing(entry -> entry.getKey()));
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Entry> entry : list) {
+            Entry value = entry.getValue();
+            sb.append(entry.getKey()).append('\t')
+              .append(value.count).append('\t')
+              .append(value.manual ? "manual" : "auto").append('\n');
+        }
+        return sb.toString();
+    }
+
+    public void exportAsync(final Uri uri, final ResultCallback callback) {
+        executor.execute(() -> {
+            boolean ok = false;
+            int count;
+            synchronized (UserDictionary.this) {
+                count = entries.size();
+            }
+            String data = exportText();
+            try (OutputStream os = context.getContentResolver().openOutputStream(uri, "wt")) {
+                if (os != null) {
+                    os.write(data.getBytes(StandardCharsets.UTF_8));
+                    os.flush();
+                    ok = true;
+                }
+            } catch (IOException e) {
+                Log.w(TAG, "Failed to export user dictionary", e);
+            }
+            if (callback != null) callback.onResult(ok, count);
         });
+    }
+
+    public void importAsync(final Uri uri, final ResultCallback callback) {
+        executor.execute(() -> {
+            boolean ok = false;
+            int added = 0;
+            try (InputStream is = context.getContentResolver().openInputStream(uri)) {
+                if (is != null) {
+                    added = importTsv(readAll(is));
+                    final Map<String, Entry> snapshot;
+                    synchronized (UserDictionary.this) {
+                        snapshot = new HashMap<>(entries);
+                    }
+                    persistNow(snapshot);
+                    ok = true;
+                }
+            } catch (IOException e) {
+                Log.w(TAG, "Failed to import user dictionary", e);
+            }
+            if (callback != null) callback.onResult(ok, added);
+        });
+    }
+
+    private int importTsv(String text) {
+        int added = 0;
+        synchronized (this) {
+            for (String line : text.split("\n")) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
+                String[] parts = line.split("\t");
+                String word = parts[0].trim().toLowerCase();
+                if (word.length() < MIN_WORD_LENGTH || !word.matches("[a-z']+")) continue;
+                if (entries.containsKey(word)) continue;
+                if (entries.size() >= MAX_ENTRIES) break;
+                int count = 1;
+                if (parts.length >= 2) {
+                    try {
+                        count = Integer.parseInt(parts[1].trim());
+                    } catch (NumberFormatException ignored) {
+                        count = 1;
+                    }
+                }
+                if (count < 1) count = 1;
+                boolean manual = parts.length >= 3 && "manual".equals(parts[2].trim());
+                entries.put(word, new Entry(count, manual));
+                added++;
+            }
+        }
+        return added;
+    }
+
+    private static String readAll(InputStream is) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] chunk = new byte[8192];
+        int read;
+        while ((read = is.read(chunk)) != -1) {
+            buffer.write(chunk, 0, read);
+        }
+        return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
     }
 }

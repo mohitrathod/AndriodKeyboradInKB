@@ -23,7 +23,7 @@
 - `app/src/main/java/com/mohitrathod/andriodkeyboradinkb/WordDictionary.java`
   - Loads bundled frequency word list from assets; prefix lookup with frequency ranking.
 - `app/src/main/java/com/mohitrathod/andriodkeyboradinkb/UserDictionary.java`
-  - Personal dictionary persisted to app-private storage; tracks usage counts, supports manual add/remove.
+  - Personal dictionary persisted to app-private storage; tracks usage counts, supports manual add/remove, and TSV import/export.
 - `app/src/main/AndroidManifest.xml`
   - Declares the launcher activity and input-method service.
 - `app/src/main/assets/words.txt`
@@ -41,9 +41,10 @@
 - `SHIFT` persists after typing and converts letters to uppercase.
 - `DEL` deletes one character on tap and repeats while held.
 - Control labels use smaller text so `SHIFT`, `DEL`, and `ENTER` fit.
-- **Suggestion strip** above keys when not on symbols page; shows up to 3 completions.
-- **Autocomplete**: merges personal dictionary (active words) with bundled list; tap to replace current word.
-- **Learning**: words typed twice are added to personal dictionary; manual add is immediate.
+- **Suggestion strip** above keys when not on symbols page; appears only when the current word prefix has 4+ letters, showing up to 3 completions.
+- **Autocomplete**: merges personal dictionary (active words) with bundled list; only words of 4+ letters are stored or suggested; tap to replace current word.
+- **Learning**: words of 4+ letters typed twice are added to personal dictionary; manual add is immediate and also requires 4+ letters.
+- **Import/Export**: from the app, export the personal dictionary to a TSV file (`word<TAB>count<TAB>auto|manual`) and import one back via the system file picker (Storage Access Framework, no storage permission). Import **merges**: existing words keep their count/manual flag, only new words are added.
 
 ## Build environment
 

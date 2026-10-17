@@ -19,6 +19,7 @@ public class WordDictionary {
     private static final String TAG = "WordDictionary";
     private static final String ASSET_FILE = "words.txt";
     private static final int MAX_CANDIDATES_SCAN = 500;
+    private static final int MIN_WORD_LENGTH = 4;
 
     private String[] words;
     private int[] ranks;
@@ -43,7 +44,7 @@ public class WordDictionary {
                     String[] parts = line.split("\t");
                     if (parts.length >= 1) {
                         String word = parts[0].toLowerCase();
-                        if (word.length() >= 2 && word.matches("[a-z']+")) {
+                        if (word.length() >= MIN_WORD_LENGTH && word.matches("[a-z']+")) {
                             wordList.add(word);
                             rankList.add(rank++);
                         }
@@ -94,7 +95,7 @@ public class WordDictionary {
 
     public List<String> suggest(String prefix, int max) {
         List<String> result = new ArrayList<>();
-        if (!ready || prefix == null || prefix.length() < 1) return result;
+        if (!ready || prefix == null || prefix.length() < MIN_WORD_LENGTH) return result;
 
         String p = prefix.toLowerCase();
         int start = Arrays.binarySearch(words, p);

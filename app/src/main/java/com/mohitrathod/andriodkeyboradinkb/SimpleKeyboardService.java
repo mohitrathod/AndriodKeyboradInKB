@@ -14,6 +14,7 @@ public class SimpleKeyboardService extends InputMethodService {
     private static final String TAG = "SimpleKeyboardService";
     private static final int MAX_SUGGESTIONS = 3;
     private static final int WORD_LOOKBACK = 30;
+    private static final int MIN_WORD_LENGTH = 4;
 
     private SimpleKeyboardView keyboardView;
     private WordDictionary wordDictionary;
@@ -105,7 +106,7 @@ public class SimpleKeyboardService extends InputMethodService {
 
     private void learnCurrentWord() {
         if (!wordDictionary.isReady()) return;
-        if (lastCommittedWord.length() >= 2 && lastCommittedWord.matches("[a-z']+")) {
+        if (lastCommittedWord.length() >= MIN_WORD_LENGTH && lastCommittedWord.matches("[a-z']+")) {
             String word = lastCommittedWord.toLowerCase();
             if (!wordDictionary.isKnown(word) && !userDictionary.contains(word)) {
                 userDictionary.recordUse(word);
@@ -134,7 +135,7 @@ public class SimpleKeyboardService extends InputMethodService {
         if (connection == null || keyboardView == null) return;
 
         String currentWord = getCurrentWord(connection);
-        if (currentWord.isEmpty()) {
+        if (currentWord.length() < MIN_WORD_LENGTH) {
             keyboardView.setSuggestions(Collections.emptyList());
             return;
         }

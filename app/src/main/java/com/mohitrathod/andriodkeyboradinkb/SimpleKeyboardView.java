@@ -112,12 +112,11 @@ public class SimpleKeyboardView extends LinearLayout {
     private void renderSuggestions() {
         if (suggestionsRow == null) return;
         suggestionsRow.removeAllViews();
+        suggestionsRow.setVisibility(VISIBLE);
         int count = Math.min(suggestions.size(), 3);
         if (count == 0) {
-            suggestionsRow.setVisibility(GONE);
             return;
         }
-        suggestionsRow.setVisibility(VISIBLE);
         float weight = 1f / count;
         for (int i = 0; i < count; i++) {
             addSuggestionKey(suggestionsRow, suggestions.get(i), weight);

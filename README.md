@@ -8,6 +8,7 @@ A minimal Android input method with a clean light theme, offline autocomplete, a
 - Special characters page (?123 / #+=)
 - **Offline autocomplete** — suggestion strip above keys with up to 3 word completions
 - **Personal dictionary** — learns words you type (after 2 uses) and lets you add custom words manually
+- **Import / export** — back up your custom words to a file (TSV) and merge them back via the system file picker
 
 ## Usage
 Open the app, tap **Open keyboard settings**, enable **Andriod Keyborad In KB**, and select it in any text field.
